@@ -68,6 +68,11 @@ def optimize_compound(smiles, goals):
     return ""
 
 
+def visualize_compound(smiles):
+    """Placeholder – returns None until 2D rendering is wired up."""
+    return None
+
+
 def prepare_docking(pdb_id, smiles):
     """Placeholder – returns empty until logic is wired up."""
     return ""
@@ -193,8 +198,31 @@ with gr.Blocks(title="AI Drug Design Platform") as demo:
                 outputs=[optim_output],
             )
 
+        # ── Compound Visualization ──────────────────────────────
         with gr.Tab("Compound Visualization"):
-            gr.Markdown("*Coming soon*")
+            with gr.Row():
+                with gr.Column(scale=1):
+                    viz_smiles_input = gr.Textbox(
+                        label="Compound SMILES",
+                        placeholder="e.g., CC(=O)OC1=CC=CC=C1C(=O)O",
+                        lines=3,
+                    )
+                    visualize_btn = gr.Button(
+                        "Visualize Compound",
+                        size="lg",
+                        elem_classes=["analyze-btn"],
+                    )
+
+                with gr.Column(scale=1):
+                    viz_output = gr.Image(
+                        label="2D Compound Representation",
+                    )
+
+            visualize_btn.click(
+                visualize_compound,
+                inputs=[viz_smiles_input],
+                outputs=[viz_output],
+            )
 
         # ── Docking Preparation ─────────────────────────────────
         with gr.Tab("Docking Preparation"):
