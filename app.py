@@ -58,6 +58,31 @@ def analyze_protein(pdb_id):
     return ""
 
 
+def evaluate_compound(pdb_id, smiles):
+    """Placeholder – returns empty until logic is wired up."""
+    return ""
+
+
+def optimize_compound(smiles, goals):
+    """Placeholder – returns empty until logic is wired up."""
+    return ""
+
+
+def prepare_docking(pdb_id, smiles):
+    """Placeholder – returns empty until logic is wired up."""
+    return ""
+
+
+def auto_calculate_center(pdb_id, smiles):
+    """Placeholder – returns default coordinates until logic is wired up."""
+    return 0.0, 0.0, 0.0
+
+
+def run_docking(pdb_id, smiles, center_x, center_y, center_z):
+    """Placeholder – returns empty until logic is wired up."""
+    return "", None
+
+
 with gr.Blocks(title="AI Drug Design Platform") as demo:
 
     # Title bar
@@ -89,19 +114,172 @@ with gr.Blocks(title="AI Drug Design Platform") as demo:
             analyze_btn.click(analyze_protein, inputs=[pdb_input], outputs=[summary_output])
 
         # ── Placeholder tabs ────────────────────────────────────
+        # ── Compound Evaluation ─────────────────────────────────
         with gr.Tab("Compound Evaluation"):
-            gr.Markdown("*Coming soon*")
+            with gr.Row():
+                with gr.Column(scale=1):
+                    eval_pdb_input = gr.Textbox(
+                        label="Target Protein PDB ID",
+                        placeholder="e.g., 6LU7",
+                    )
+                    eval_smiles_input = gr.Textbox(
+                        label="Compound SMILES",
+                        placeholder="e.g., CC(=O)OC1=CC=CC=C1C(=O)O",
+                        lines=3,
+                    )
+                    evaluate_btn = gr.Button(
+                        "Evaluate Compound",
+                        size="lg",
+                        elem_classes=["analyze-btn"],
+                    )
 
+                with gr.Column(scale=1):
+                    eval_output = gr.Textbox(
+                        label="Evaluation Results",
+                        interactive=False,
+                        lines=12,
+                        placeholder=(
+                            "a. Likelihood of Target Binding\n"
+                            "b. Potential Activity Against the Target\n"
+                            "c. Pharmacokinetic Considerations\n"
+                            "d. Structural Improvements for Better Target Activity\n"
+                            "e. Potential Off-Target Concerns\n"
+                            "f. Overall Suitability for Further Development"
+                        ),
+                    )
+
+            evaluate_btn.click(
+                evaluate_compound,
+                inputs=[eval_pdb_input, eval_smiles_input],
+                outputs=[eval_output],
+            )
+
+        # ── Compound Optimization ───────────────────────────────
         with gr.Tab("Compound Optimization"):
-            gr.Markdown("*Coming soon*")
+            with gr.Row():
+                with gr.Column(scale=1):
+                    optim_smiles_input = gr.Textbox(
+                        label="Compound SMILES",
+                        placeholder="e.g., CC(=O)OC1=CC=CC=C1C(=O)O",
+                        lines=3,
+                    )
+                    optim_goals_input = gr.Textbox(
+                        label="Optimization Goals",
+                        placeholder="e.g., Increase solubility, reduce lipophilicity",
+                        lines=3,
+                    )
+                    optimize_btn = gr.Button(
+                        "Optimize Compound",
+                        size="lg",
+                        elem_classes=["analyze-btn"],
+                    )
+
+                with gr.Column(scale=1):
+                    optim_output = gr.Textbox(
+                        label="Optimization Suggestions",
+                        interactive=False,
+                        lines=12,
+                        placeholder=(
+                            "a. Initial Properties of the Compound\n"
+                            "b. Suggested Structural Modifications\n"
+                            "c. Optimization Goal Mapping\n"
+                            "d. Drug-Likeness Considerations"
+                        ),
+                    )
+
+            optimize_btn.click(
+                optimize_compound,
+                inputs=[optim_smiles_input, optim_goals_input],
+                outputs=[optim_output],
+            )
 
         with gr.Tab("Compound Visualization"):
             gr.Markdown("*Coming soon*")
 
+        # ── Docking Preparation ─────────────────────────────────
         with gr.Tab("Docking Preparation"):
-            gr.Markdown("*Coming soon*")
+            with gr.Row():
+                with gr.Column(scale=1):
+                    dock_pdb_input = gr.Textbox(
+                        label="Target Protein PDB ID",
+                        placeholder="e.g., 6LU7",
+                    )
+                    dock_smiles_input = gr.Textbox(
+                        label="Compound SMILES",
+                        placeholder="e.g., CC(=O)OC1=CC=CC=C1C(=O)O",
+                        lines=3,
+                    )
+                    prepare_btn = gr.Button(
+                        "Prepare Files for Vina",
+                        size="lg",
+                        elem_classes=["analyze-btn"],
+                    )
 
+                with gr.Column(scale=1):
+                    dock_output = gr.Textbox(
+                        label="Preparation Results",
+                        interactive=False,
+                        lines=12,
+                        placeholder=(
+                            "a. Confirmation that Preparation was Successful\n"
+                            "b. Protein PDB Saved / Ligand PDB Saved\n"
+                            "c. Steps on Proceeding with AutoDock Vina"
+                        ),
+                    )
+
+            prepare_btn.click(
+                prepare_docking,
+                inputs=[dock_pdb_input, dock_smiles_input],
+                outputs=[dock_output],
+            )
+
+        # ── Molecular Docking ────────────────────────────────────
         with gr.Tab("Molecular Docking"):
-            gr.Markdown("*Coming soon*")
+            with gr.Row():
+                with gr.Column(scale=1):
+                    vina_pdb_input = gr.Textbox(
+                        label="Target PDB ID",
+                        placeholder="e.g., 6LU7",
+                    )
+                    vina_smiles_input = gr.Textbox(
+                        label="Ligand SMILES",
+                        placeholder="e.g., CC(=O)OC1=CC=CC=C1C(=O)O",
+                        lines=3,
+                    )
+                    auto_calc_btn = gr.Button(
+                        "Auto-Calculate Center from Co-Ligand",
+                        size="sm",
+                        elem_classes=["analyze-btn"],
+                    )
+                    with gr.Row():
+                        center_x = gr.Number(label="Center X", value=0.0, precision=3)
+                        center_y = gr.Number(label="Center Y", value=0.0, precision=3)
+                        center_z = gr.Number(label="Center Z", value=0.0, precision=3)
+                    run_vina_btn = gr.Button(
+                        "Run AutoDock Vina",
+                        size="lg",
+                        elem_classes=["analyze-btn"],
+                    )
+
+                with gr.Column(scale=1):
+                    vina_affinities = gr.Textbox(
+                        label="Vina Binding Affinities",
+                        interactive=False,
+                        lines=8,
+                    )
+                    vina_output_file = gr.File(
+                        label="Docked PDBQT File (Download)",
+                    )
+
+            auto_calc_btn.click(
+                auto_calculate_center,
+                inputs=[vina_pdb_input, vina_smiles_input],
+                outputs=[center_x, center_y, center_z],
+            )
+            run_vina_btn.click(
+                run_docking,
+                inputs=[vina_pdb_input, vina_smiles_input, center_x, center_y, center_z],
+                outputs=[vina_affinities, vina_output_file],
+            )
 
 demo.launch(theme=theme, css=css)
