@@ -35,7 +35,16 @@ def fetch_uniprot(uid):
         for t in c.get("texts", [])
     )
     pubchem_cids = [x.get("id") for x in d.get("dbCrossReferences", []) if x.get("database") == "PubChem"]
-    return {"name": name, "organism": organism, "function": fn or "N/A", "uniprot_id": uid.upper(), "pubchem_cids": pubchem_cids, "chem_ids": []}
+    chembl_ids = [x.get("id") for x in d.get("dbCrossReferences", []) if x.get("database") == "ChEMBL"]
+    return {
+        "name": name,
+        "organism": organism,
+        "function": fn or "N/A",
+        "uniprot_id": uid.upper(),
+        "pubchem_cids": pubchem_cids,
+        "chembl_ids": chembl_ids,
+        "chem_ids": [],
+    }
 
 
 def search_uniprot(query):
@@ -52,19 +61,46 @@ def fetch_pdb(pid):
     r.raise_for_status()
     d = r.json()
     name = d.get("struct", {}).get("title", pid)
-    lr = requests.get(f"https://data.rcsb.org/rest/v1/core/entry/{pid}/components", timeout=10)
-    skip = {"HOH", "SO4", "PO4", "GOL", "EDO", "ACT", None}
-    chem_ids = [c.get("chem_comp", {}).get("id") for c in (lr.json() if lr.ok else []) if c.get("chem_comp", {}).get("id") not in skip]
-    return {"name": name, "organism": "N/A", "function": f"PDB structure {pid}", "pdb_id": pid, "chem_ids": chem_ids[:5], "pubchem_cids": []}
+    entity_ids = d.get("rcsb_entry_container_identifiers", {}).get("non_polymer_entity_ids", []) or []
+    skip = {"HOH", "SO4", "PO4", "GOL", "EDO", "ACT", "FMT", "IOD", "CL", "MG", "ZN", "CA", "NA"}
+    chem_ids = []
+    for eid in entity_ids[:10]:
+        try:
+            er = requests.get(f"https://data.rcsb.org/rest/v1/core/nonpolymer_entity/{pid}/{eid}", timeout=10)
+            cid = er.json().get("pdbx_entity_nonpoly", {}).get("comp_id")
+            if cid and cid not in skip:
+                chem_ids.append(cid)
+        except Exception:
+            continue
+    return {
+        "name": name,
+        "organism": "N/A",
+        "function": f"PDB structure {pid}",
+        "pdb_id": pid,
+        "chem_ids": chem_ids[:5],
+        "pubchem_cids": [],
+        "chembl_ids": [],
+    }
 
 
-def smiles_from_pubchem(cid):
+def smiles_from_pubchem_cid(cid):
     try:
         r = requests.get(f"https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/{cid}/property/IsomericSMILES/JSON", timeout=10)
         props = r.json().get("PropertyTable", {}).get("Properties", [])
         return props[0].get("IsomericSMILES") if props else None
     except Exception:
         return None
+
+
+def smiles_from_chembl_id(chembl_id):
+    try:
+        r = requests.get(f"https://www.ebi.ac.uk/chembl/api/data/molecule/{chembl_id}.json", timeout=10)
+        d = r.json()
+        smi = d.get("molecule_structures", {}).get("canonical_smiles")
+        name = d.get("pref_name") or chembl_id
+        return smi, name
+    except Exception:
+        return None, None
 
 
 def smiles_from_pdb_ligand(chem_id):
@@ -76,16 +112,31 @@ def smiles_from_pdb_ligand(chem_id):
         return None
 
 
-def smiles_from_chembl(uniprot_id):
+def smiles_via_chembl_target(uniprot_id):
     try:
-        tr = requests.get("https://www.ebi.ac.uk/chembl/api/data/target.json", params={"target_components__accession": uniprot_id, "limit": 1}, timeout=10)
+        tr = requests.get(
+            "https://www.ebi.ac.uk/chembl/api/data/target.json",
+            params={"target_components__accession": uniprot_id, "limit": 1},
+            timeout=10
+        )
         targets = tr.json().get("targets", [])
         if not targets:
             return None, None
-        mr = requests.get("https://www.ebi.ac.uk/chembl/api/data/molecule.json", params={"molecule_type": "Small molecule", "limit": 5}, timeout=10)
-        for mol in mr.json().get("molecules", []):
-            smi = mol.get("molecule_structures", {}).get("canonical_smiles")
-            name = mol.get("pref_name") or mol.get("molecule_chembl_id", "Unknown")
+        target_chembl_id = targets[0]["target_chembl_id"]
+
+        ar = requests.get(
+            "https://www.ebi.ac.uk/chembl/api/data/activity.json",
+            params={"target_chembl_id": target_chembl_id, "assay_type": "B", "limit": 10},
+            timeout=10
+        )
+        for act in ar.json().get("activities", []):
+            mol_id = act.get("molecule_chembl_id")
+            if not mol_id:
+                continue
+            mr = requests.get(f"https://www.ebi.ac.uk/chembl/api/data/molecule/{mol_id}.json", timeout=10)
+            md = mr.json()
+            smi = md.get("molecule_structures", {}).get("canonical_smiles")
+            name = md.get("pref_name") or mol_id
             if smi:
                 return smi, name
     except Exception:
@@ -131,11 +182,17 @@ def lookup(protein_id):
 
     if info.get("pubchem_cids"):
         cid = info["pubchem_cids"][0]
-        smiles = smiles_from_pubchem(cid)
+        smiles = smiles_from_pubchem_cid(cid)
         compound_name = f"PubChem CID {cid}"
 
+    if not smiles and info.get("chembl_ids"):
+        for cid in info["chembl_ids"]:
+            smiles, compound_name = smiles_from_chembl_id(cid)
+            if smiles:
+                break
+
     if not smiles and info.get("uniprot_id"):
-        smiles, compound_name = smiles_from_chembl(info["uniprot_id"])
+        smiles, compound_name = smiles_via_chembl_target(info["uniprot_id"])
 
     if not smiles and info.get("chem_ids"):
         for cid in info["chem_ids"]:
@@ -158,7 +215,7 @@ def lookup(protein_id):
     if smiles:
         lines += [f"Compound: {compound_name}", f"SMILES: {smiles[:80]}{'...' if len(smiles) > 80 else ''}"]
     else:
-        lines.append("No compound found. Try P00533 (EGFR) or 1IEP (Bcr-Abl).")
+        lines.append("No compound found for this protein.")
 
     return "\n".join(lines), image
 
@@ -174,7 +231,7 @@ def build_tab():
         with gr.Row():
             info_output = gr.Textbox(label="Info", lines=12, interactive=False, scale=1)
             img_output = gr.Image(label="2D Compound Structure", type="pil", scale=1, height=420)
-        gr.Examples(examples=[["P00533"], ["1IEP"], ["P0DTD1"], ["EGFR"]], inputs=id_input)
+        gr.Examples(examples=[["P00533"], ["1IEP"], ["P0DTD1"], ["P00918"]], inputs=id_input)
 
         submit_btn.click(fn=lookup, inputs=id_input, outputs=[info_output, img_output])
         id_input.submit(fn=lookup, inputs=id_input, outputs=[info_output, img_output])
