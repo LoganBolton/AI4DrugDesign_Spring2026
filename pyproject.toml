@@ -8,4 +8,7 @@ dependencies = [
     "gradio>=6.4.0",
     "openai>=2.15.0",
     "python-dotenv>=1.2.1",
+    "requests",
+    "Pillow",
+    "rdkit",
 ]

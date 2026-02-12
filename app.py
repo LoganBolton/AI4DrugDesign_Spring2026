@@ -1,5 +1,6 @@
 import gradio as gr
 from dotenv import load_dotenv
+from tabs.protein_image_tab import build_tab as protein_image_tab
 
 load_dotenv()  # must run before tab imports so OpenAI keys are available
 
@@ -67,5 +68,7 @@ with gr.Blocks(title="AI Drug Design Platform") as demo:
         docking_preparation_tab()
         molecular_docking_tab()
         chat_tab()
+        with gr.Tab("structure viewer"):
+            protein_image_tab()
 
 demo.launch(theme=theme, css=css)
