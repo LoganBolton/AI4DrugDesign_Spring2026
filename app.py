@@ -68,7 +68,7 @@ with gr.Blocks(title="AI Drug Design Platform") as demo:
         docking_preparation_tab()
         molecular_docking_tab()
         chat_tab()
-        with gr.Tab("structure viewer"):
+        with gr.Tab("Structure Viewer"):
             protein_image_tab()
 
 demo.launch(theme=theme, css=css)
