@@ -1,9 +1,26 @@
 import gradio as gr
+from rdkit import Chem
+from rdkit.Chem import Draw
+from rdkit.Chem import AllChem
+import io
 
 
 def _visualize_compound(smiles):
-    """Placeholder – returns None until 2D rendering is wired up."""
-    return None
+    if not smiles:
+        return None
+
+    try:
+        mol = Chem.MolFromSmiles(smiles)
+        if mol is None:
+            return None
+
+        Chem.rdDepictor.Compute2DCoords(mol)
+        img = Draw.MolToImage(mol, size=(400, 400))
+
+        return img
+
+    except Exception:
+        return None
 
 
 def create_tab():
