@@ -1,7 +1,14 @@
 {
   "permissions": {
     "allow": [
-      "Bash(uv run python:*)"
+      "Bash(uv run python:*)",
+      "WebSearch",
+      "WebFetch(domain:autodock-vina.readthedocs.io)",
+      "WebFetch(domain:meeko.readthedocs.io)",
+      "WebFetch(domain:www.blopig.com)",
+      "Bash(uv sync:*)",
+      "Bash(uv run:*)",
+      "Bash(ls:*)"
     ]
   }
 }

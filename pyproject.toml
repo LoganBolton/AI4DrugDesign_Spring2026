@@ -5,7 +5,12 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "gemmi>=0.7.1",
     "gradio>=6.4.0",
+    "meeko>=0.7.1",
+    "numpy>=1.26.0",
     "openai>=2.15.0",
     "python-dotenv>=1.2.1",
+    "rdkit>=2024.3.5",
+    "scipy>=1.12.0",
 ]
