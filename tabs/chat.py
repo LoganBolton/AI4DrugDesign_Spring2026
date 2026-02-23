@@ -2,10 +2,14 @@ import gradio as gr
 import os
 from openai import OpenAI
 
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-
 
 def _chat(message, history):
+    api_key = os.getenv("OPENAI_API_KEY")
+    if not api_key:
+        return "OpenAI API key is not set. Please add OPENAI_API_KEY to your .env file or environment variables."
+
+    client = OpenAI(api_key=api_key)
+
     messages = []
     for user_msg, assistant_msg in history:
         messages.append({"role": "user", "content": user_msg})
