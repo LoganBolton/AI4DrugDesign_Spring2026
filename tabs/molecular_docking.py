@@ -11,6 +11,7 @@ import numpy as np
 from meeko import MoleculePreparation, PDBQTWriterLegacy
 from rdkit import Chem
 from rdkit.Chem import AllChem
+from vina import Vina
 
 
 # Common non-drug HETATM residues to ignore when searching for a co-ligand
@@ -134,6 +135,16 @@ def _smiles_to_pdbqt(smiles: str, output_path: str) -> None:
         f.write(pdbqt_string)
 
 
+def _clean_pdb_for_receptor(pdb_path: str, cleaned_path: str) -> None:
+    """Strip HETATM records and keep only standard protein atoms for receptor preparation."""
+    with open(pdb_path) as f:
+        lines = f.readlines()
+    with open(cleaned_path, "w") as f:
+        for line in lines:
+            if line.startswith(("ATOM", "TER", "END", "MODEL", "ENDMDL", "REMARK", "CRYST1")):
+                f.write(line)
+
+
 def _prepare_receptor_pdbqt(pdb_path: str, output_path: str) -> None:
     """Prepare receptor PDBQT from a PDB file using mk_prepare_receptor.py (meeko)."""
     mk_script = shutil.which("mk_prepare_receptor.py") or shutil.which("mk_prepare_receptor")
@@ -143,7 +154,14 @@ def _prepare_receptor_pdbqt(pdb_path: str, output_path: str) -> None:
             "Try: pip install meeko"
         )
 
-    cmd = [mk_script, "-i", pdb_path, "-o", output_path]
+    # Clean PDB to remove HETATM records (ligands, cofactors, waters) that
+    # cause meeko to fail on unknown residues.
+    cleaned_path = pdb_path.replace(".pdb", "_clean.pdb")
+    _clean_pdb_for_receptor(pdb_path, cleaned_path)
+
+    # -o sets the output basename (meeko appends .pdbqt), -p writes PDBQT
+    output_basename = output_path.removesuffix(".pdbqt")
+    cmd = [mk_script, "-i", cleaned_path, "-o", output_basename, "-p"]
     try:
         result = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
     except subprocess.TimeoutExpired:
@@ -154,50 +172,22 @@ def _prepare_receptor_pdbqt(pdb_path: str, output_path: str) -> None:
         raise gr.Error(f"Receptor preparation failed:\n{stderr_msg}")
 
 
-def _find_vina_binary() -> str:
-    """Locate the AutoDock Vina binary."""
-    vina_path = shutil.which("vina")
-    if vina_path:
-        return vina_path
+def _format_vina_energies(energies: np.ndarray) -> str:
+    """Format Vina energy array into a readable affinity table.
 
-    # Check common install locations
-    for candidate in [
-        "/usr/local/bin/vina",
-        os.path.expanduser("~/bin/vina"),
-        os.path.expanduser("~/autodock_vina/bin/vina"),
-    ]:
-        if os.path.isfile(candidate) and os.access(candidate, os.X_OK):
-            return candidate
-
-    raise gr.Error(
-        "AutoDock Vina binary not found on PATH. "
-        "Please install it from: https://github.com/ccsb-scripps/AutoDock-Vina/releases "
-        "and ensure the 'vina' executable is on your PATH."
-    )
-
-
-def _parse_vina_output(stdout: str) -> str:
-    """Extract the affinity table from Vina stdout."""
-    lines = stdout.splitlines()
-    capture = False
-    result_lines = []
-    for line in lines:
-        if "-----+" in line:
-            capture = True
-            result_lines.append(line)
-            continue
-        if capture:
-            if line.strip() == "" or line.startswith("Writing"):
-                break
-            result_lines.append(line)
-
-    if not result_lines:
-        # Return the full output if we can't parse the table
-        return stdout
-
-    header = "mode |   affinity   | dist from best mode"
-    subhdr = "     | (kcal/mol)   | rmsd l.b.| rmsd u.b."
-    return "\n".join([header, subhdr] + result_lines)
+    energies columns: [affinity, inter, intra, torsion, unbound]
+    """
+    header = "mode |  affinity  |  inter   |  intra   | torsion"
+    subhdr = "     | (kcal/mol) |          |          |        "
+    sep    = "-----+------------+----------+----------+--------"
+    lines = [header, subhdr, sep]
+    for i, row in enumerate(energies, start=1):
+        affinity = row[0]
+        inter = row[1] if len(row) > 1 else 0.0
+        intra = row[2] if len(row) > 2 else 0.0
+        torsion = row[3] if len(row) > 3 else 0.0
+        lines.append(f"  {i:>2} | {affinity:>10.3f} | {inter:>8.3f} | {intra:>8.3f} | {torsion:>6.3f}")
+    return "\n".join(lines)
 
 
 def _auto_calculate_center(pdb_id, smiles):
@@ -219,7 +209,6 @@ def _run_docking(pdb_id, smiles, center_x, center_y, center_z):
     if not smiles or not smiles.strip():
         raise gr.Error("Please enter a ligand SMILES string.")
 
-    vina_bin = _find_vina_binary()
     pdb_text = _fetch_pdb(pdb_id)
 
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -236,33 +225,24 @@ def _run_docking(pdb_id, smiles, center_x, center_y, center_z):
         ligand_pdbqt = os.path.join(tmpdir, "ligand.pdbqt")
         _smiles_to_pdbqt(smiles.strip(), ligand_pdbqt)
 
-        # Run Vina
+        # Run Vina via Python API
         output_pdbqt = os.path.join(tmpdir, "docked_output.pdbqt")
-        cmd = [
-            vina_bin,
-            "--receptor", receptor_pdbqt,
-            "--ligand", ligand_pdbqt,
-            "--center_x", str(float(center_x)),
-            "--center_y", str(float(center_y)),
-            "--center_z", str(float(center_z)),
-            "--size_x", "25",
-            "--size_y", "25",
-            "--size_z", "25",
-            "--exhaustiveness", "8",
-            "--out", output_pdbqt,
-        ]
-
         try:
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
-        except subprocess.TimeoutExpired:
-            raise gr.Error("AutoDock Vina timed out after 300 seconds.")
+            v = Vina(sf_name="vina")
+            v.set_receptor(receptor_pdbqt)
+            v.set_ligand_from_file(ligand_pdbqt)
+            v.compute_vina_maps(
+                center=[float(center_x), float(center_y), float(center_z)],
+                box_size=[25, 25, 25],
+            )
+            v.dock(exhaustiveness=8, n_poses=9)
+            v.write_poses(output_pdbqt, n_poses=9, overwrite=True)
+            energies = v.energies(n_poses=9)
+        except Exception as e:
+            raise gr.Error(f"Vina docking failed:\n{e}")
 
-        if result.returncode != 0:
-            stderr_msg = result.stderr[:500] if result.stderr else "No error output"
-            raise gr.Error(f"Vina docking failed:\n{stderr_msg}")
-
-        # Parse affinities
-        affinities = _parse_vina_output(result.stdout)
+        # Format affinities
+        affinities = _format_vina_energies(energies)
 
         # Copy docked output to a persistent temp file for Gradio download
         if os.path.exists(output_pdbqt):
