@@ -40,12 +40,9 @@ def chat_fn(message, history):
 with gr.Blocks() as demo:
     chat.create_tab()
     protein_analysis.create_tab()
-    compound_evaluation.create_tab()
     compound_optimization.create_tab()
     compound_visualization.create_tab()
-    docking_preparation.create_tab()
     molecular_docking.create_tab()
     protein_image_tab.create_tab()
 
 demo.launch()
-
