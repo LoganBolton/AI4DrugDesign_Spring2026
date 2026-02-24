@@ -37,12 +37,6 @@ Quick reference for demoing each tab.
 - Renders the first compound it finds using **RDKit** (falls back to PubChem's image API).
 - Output: protein info text + 2D image of an associated compound.
 
-## Chat
-
-- Free-form conversational interface powered by **OpenAI (GPT-5-nano)**.
-- Maintains multi-turn conversation history.
-- Output: AI-generated text responses.
-
 ---
 
 ## Data Sources & Tools
@@ -66,4 +60,12 @@ Quick reference for demoing each tab.
 
 - **AutoDock Vina** — Molecular docking engine that simulates how a small molecule (ligand) binds to a protein. Outputs binding affinity scores in kcal/mol. Used by: Molecular Docking.
 
+---
 
+## Questions for Professor
+
+### Tab structure / scope
+- Compound Visualization and Compound Structure Viewer have overlapping functionality (both render 2D molecules). Should we merge them, or keep them separate for different use cases?
+- For Molecular Docking, should we add visualization of the docked pose (3D viewer), or is the affinity table + downloadable file enough?
+- Are there other databases or data sources we should integrate (e.g. DrugBank, ZINC, BindingDB)?
+- What new features do you want?
