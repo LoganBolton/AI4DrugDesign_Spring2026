@@ -3,7 +3,6 @@ import os
 from openai import OpenAI
 from dotenv import load_dotenv
 
-# Import tab modules
 from tabs import (
     chat,
     compound_optimization,
@@ -13,10 +12,7 @@ from tabs import (
     protein_image_tab,
 )
 
-# Load environment variables
 load_dotenv()
-
-# Initialize OpenAI client
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 def chat_fn(message, history):
