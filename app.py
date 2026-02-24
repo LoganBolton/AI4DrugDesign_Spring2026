@@ -6,10 +6,8 @@ from dotenv import load_dotenv
 # Import tab modules
 from tabs import (
     chat,
-    compound_evaluation,
     compound_optimization,
     compound_visualization,
-    docking_preparation,
     molecular_docking,
     protein_analysis,
     protein_image_tab,
