@@ -294,6 +294,14 @@ def create_tab():
                     label="Docked PDBQT File (Download)",
                 )
 
+        gr.Examples(
+            examples=[
+                ["6LU7", "CC(=O)OC1=CC=CC=C1C(=O)O"],
+                ["1IEP", "CC(C)Cc1ccc(C(C)C(=O)O)cc1"],
+            ],
+            inputs=[vina_pdb_input, vina_smiles_input],
+        )
+
         auto_calc_btn.click(
             _auto_calculate_center,
             inputs=[vina_pdb_input, vina_smiles_input],

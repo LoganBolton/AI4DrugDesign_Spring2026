@@ -173,6 +173,15 @@ def create_tab():
                     height=350,
                 )
 
+        gr.Examples(
+            examples=[
+                ["CC(=O)Oc1ccccc1C(=O)O", "Increase solubility"],
+                ["c1ccc2c(c1)cc1ccc3cccc4ccc2c1c34", "Reduce lipophilicity"],
+                ["CC(C)Cc1ccc(C(C)C(=O)O)cc1", "Improve bioavailability"],
+            ],
+            inputs=[optim_smiles_input, optim_goals_input],
+        )
+
         optimize_btn.click(
             _optimize_compound,
             inputs=[optim_smiles_input, optim_goals_input],

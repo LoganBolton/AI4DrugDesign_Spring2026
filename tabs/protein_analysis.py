@@ -220,7 +220,6 @@ Be specific, concise, and scientifically accurate. Use the structural data provi
     response = client.chat.completions.create(
         model="gpt-5-nano-2025-08-07",
         messages=[{"role": "user", "content": prompt}],
-        max_tokens=10000,
     )
     return response.choices[0].message.content
 
@@ -289,5 +288,7 @@ def create_tab():
                         "  • Analysis Recommendations"
                     ),
                 )
+
+        gr.Examples(examples=[["1AZ5"], ["6LU7"], ["1IEP"], ["2HYY"]], inputs=pdb_input)
 
         analyze_btn.click(_analyze_protein, inputs=[pdb_input], outputs=[summary_output])
