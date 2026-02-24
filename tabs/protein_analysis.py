@@ -217,12 +217,10 @@ Provide a comprehensive analysis with the following clearly labeled sections:
    - Suggest follow-up experiments, computational studies, or structural optimization strategies.
 
 Be specific, concise, and scientifically accurate. Use the structural data provided."""
-
     response = client.chat.completions.create(
-        model="gpt-4o",
+        model="gpt-5-nano-2025-08-07",
         messages=[{"role": "user", "content": prompt}],
-        max_tokens=1400,
-        temperature=0.3,
+        max_tokens=10000,
     )
     return response.choices[0].message.content
 
