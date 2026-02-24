@@ -26,14 +26,26 @@ A simple Gradio-based application for AI4DrugDesign course.
    ```
 
 
-2. **Install dependencies**:
+2. **Install system build dependencies** (required to compile AutoDock Vina):
+
+   **macOS (Homebrew):**
+   ```bash
+   brew install swig boost
+   ```
+
+   **Ubuntu/Debian:**
+   ```bash
+   sudo apt install swig libboost-all-dev
+   ```
+
+3. **Install dependencies**:
    ```bash
    uv sync
    ```
    This will:
    - Create a virtual environment in `.venv/`
    - Install Python 3.12 (specified in `.python-version`)
-   - Install all dependencies from `pyproject.toml`
+   - Install all dependencies from `pyproject.toml` (including AutoDock Vina)
 
 ## Running the App
 
@@ -45,4 +57,3 @@ To activate the virtual environment manually:
 - **macOS/Linux:** `source .venv/bin/activate`
 - **Windows (PowerShell):** `.venv\Scripts\Activate.ps1`
 - **Windows (CMD):** `.venv\Scripts\activate.bat`
-
