@@ -73,7 +73,9 @@ This module:
 SMILES:
 ```text
 CC(=O)Oc1ccccc1C(=O)O
-
+```
+Optimization Goals:
+```text
 Increase solubility, reduce lipophilicity
 ```
 
@@ -81,7 +83,9 @@ Increase solubility, reduce lipophilicity
 SMILES:
 ```text
 CC(=O)NC1=CC=C(C=C1)O
-
+```
+Optimization Goals:
+```text
 Improve metabolic stability, reduce toxicity
 ```
 
@@ -89,7 +93,9 @@ Improve metabolic stability, reduce toxicity
 SMILES:
 ```text
 Cn1cnc2n(C)c(=O)n(C)c(=O)c12
-
+```
+Optimization Goals:
+```text
 Improve BBB permeability, optimize logP
 ```
 
@@ -97,7 +103,9 @@ Improve BBB permeability, optimize logP
 SMILES:
 ```text
 CC(C)Cc1ccc(cc1)[C@@H](C)C(=O)O
-
+```
+Optimization Goals:
+```text
 Reduce lipophilicity, improve aqueous solubility
 ```
 
@@ -105,7 +113,9 @@ Reduce lipophilicity, improve aqueous solubility
 SMILES:
 ```text
 c1ccccc1
-
+```
+Optimization Goals:
+```text
 Increase polarity, improve solubility
 ```
 
