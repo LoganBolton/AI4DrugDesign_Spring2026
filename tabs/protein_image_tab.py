@@ -220,10 +220,10 @@ def lookup(protein_id):
     return "\n".join(lines), image
 
 
-def build_tab():
+def create_tab():
     import gradio as gr
 
-    with gr.Column():
+    with gr.Tab("Compound Structure Viewer"):
         gr.Markdown("## Protein → Compound Structure Viewer")
         with gr.Row():
             id_input = gr.Textbox(label="Protein ID", placeholder="e.g. P00533  or  1IEP  or  EGFR", scale=3)

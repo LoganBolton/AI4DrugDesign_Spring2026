@@ -45,7 +45,7 @@ with gr.Blocks() as demo:
     compound_visualization.create_tab()
     docking_preparation.create_tab()
     molecular_docking.create_tab()
-    protein_image_tab.build_tab()
+    protein_image_tab.create_tab()
 
 demo.launch()
 

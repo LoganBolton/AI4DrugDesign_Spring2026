@@ -17,5 +17,4 @@ dependencies = [
     "vina>=1.2.7",
     "requests",
     "Pillow",
-    "rdkit",
 ]
