@@ -43,6 +43,15 @@ def create_tab():
                     label="2D Compound Representation",
                 )
 
+        gr.Examples(
+            examples=[
+                ["CC(=O)Oc1ccccc1C(=O)O"],
+                ["CC(C)Cc1ccc(C(C)C(=O)O)cc1"],
+                ["CN1C=NC2=C1C(=O)N(C(=O)N2C)C"],
+            ],
+            inputs=viz_smiles_input,
+        )
+
         visualize_btn.click(
             _visualize_compound,
             inputs=[viz_smiles_input],

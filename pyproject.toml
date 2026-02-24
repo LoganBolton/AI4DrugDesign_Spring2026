@@ -12,4 +12,9 @@ dependencies = [
     "openai>=2.15.0",
     "prody>=2.6.1",
     "python-dotenv>=1.2.1",
+    "rdkit>=2024.3.5",
+    "scipy>=1.12.0",
+    "vina>=1.2.7",
+    "requests",
+    "Pillow",
 ]
